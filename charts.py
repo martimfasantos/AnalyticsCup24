@@ -89,6 +89,12 @@ def bar_chart(xvalues: list, yvalues: list, ax: Axes = None, title: str = '', xl
     for i in range(len(yvalues)):
         ax.text(i, yvalues[i] + TEXT_MARGIN, f'{yvalues[i]:.2f}', ha='center', fontproperties=FONT_TEXT)
 
+def bar_chart_fs(xvalues: list, yvalues: list, ax: Axes = None, title: str = '', xlabel: str = '', ylabel: str = '', percentage: bool = False, rotation: bool = False):
+    ax = set_elements(ax=ax, title=title, xlabel=xlabel, ylabel=ylabel, percentage=percentage)
+    set_locators(xvalues, ax=ax, rotation=rotation)
+    ax.bar(xvalues, yvalues, edgecolor=cfg.LINE_COLOR, color=cfg.FILL_COLOR, tick_label=xvalues)
+    for i in range(len(yvalues)):
+        ax.text(i, yvalues[i] + TEXT_MARGIN/120, f'{yvalues[i]:.2f}', ha='center', fontproperties=FONT_TEXT)
 
 def multiple_bar_chart(xvalues: list, yvalues: dict, ax: Axes = None, title: str = '', xlabel: str = '', ylabel: str = '', percentage: bool = False, unit=1):
     ax = set_elements(ax=ax, title=title, xlabel=xlabel, ylabel=ylabel, percentage=percentage, unit=unit)
