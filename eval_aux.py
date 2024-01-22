@@ -66,20 +66,21 @@ for i in range(len(file_names)):
     df.drop('TestSetId', axis=1, inplace=True)
     df.dropna(subset=[target], inplace=True)
     
-    original_df = df.copy()
-    
-    # Balance the data
-    like_zero = df[df[target] == 0]
-    like_one = df[df[target] == 1]
+    # ----------------------------- #
+    #           BALANCING           #
+    # ----------------------------- #
+
+    like_zero = df[df[target] == 0.0]
+    like_one = df[df[target] == 1.0]
 
     df_one_sample = like_one.sample(len(like_zero), replace=True)
     df_zero_sample = like_zero.sample(len(like_zero))
 
     df = pd.concat([df_zero_sample, df_one_sample], axis=0)
-    
-    print(df.info())
-    print(df.shape())
-    
+
+    # print(df.info())
+    # print(df[target].value_counts())
+
     y = df.pop(target).values
     X = df.values
 
@@ -88,41 +89,12 @@ for i in range(len(file_names)):
                     test_size=0.3, 
                     shuffle=True,
                     random_state=3)
-        
-    # # -----------------------------------------------------------------------
-    # # BALANCING (on the training set only)
-    # # -----------------------------------------------------------------------
-    # # Get the indices of the minority class
-    # minority_indices = [i for i, label in enumerate(y_train) if label == 1]
-    # like_one_sample = X_train[minority_indices]
-    # majority_indices = [i for i, label in enumerate(y_train) if label == 0]
-    # like_zero_sample = X_train[majority_indices]
-    
-    # # Convert NumPy arrays to DataFrames
-    # df_one_sample = pd.DataFrame(like_one_sample)
-    # df_zero_sample = pd.DataFrame(like_zero_sample)
-    
-    # df_one_sample = pd.DataFrame(df_one_sample.sample(len(like_zero_sample), replace=True))
-    # df_zero_sample = pd.DataFrame(df_zero_sample.sample(len(like_zero_sample)))
-    # X_train = pd.concat([df_one_sample, df_zero_sample], axis=0).values
-    # y_train = np.array([1.0] * len(df_one_sample) + [0.0] * len(df_zero_sample))         
-
-    # # Print class counts after balancing
-    # print("\nClass Counts After Balancing:")
-    # print(pd.Series(y_train).value_counts())
-    # print(pd.Series(y_test).value_counts())
-
-    
-    # Here, you want to find the best classifier. As candidates, consider
-    #   1. LogisticRegression
-    #   2. RandomForestClassifier
-    #   3. other algorithms from sklearn (easy to add)
-    #   4. custom algorithms (more difficult to implement)
     
     model_logistic_regression = LogisticRegression(max_iter=300)
     model_random_forest = RandomForestClassifier()
     model_gradient_boosting = GradientBoostingClassifier()
-
+    model_neural_network = MLPClassifier(max_iter=200)
+    
     # train the models
     if FLAG == 'missing_values' or FLAG == 'outliers':
         pipeline = Pipeline(steps=[("scaler", transform_scaler), 
@@ -133,31 +105,40 @@ for i in range(len(file_names)):
                                 ("model", None)])
 
     parameter_grid_preprocessing = {
-        # "pca__n_components" : [1, 2, 3, 4],
-        "pca__n_components" : [df.shape[1]-12, df.shape[1]-10, df.shape[1]-8, df.shape[1]-5],
+    # "pca__n_components" : [1, 2, 3, 4],
+        "pca__n_components" : [df.shape[1]-12, df.shape[1]-8, df.shape[1]-5, df.shape[1]]
     }
 
-    parameter_grid_logistic_regression = {
-        "model" : [model_logistic_regression],
-        "model__C" : [0.1, 1, 10],  # inverse regularization strength
-    }
-
-    # parameter_grid_gradient_boosting = {
-    #     "model" : [model_gradient_boosting],
-    #     "model__n_estimators" : [10, 20, 30]
+    # parameter_grid_logistic_regression = {
+    #   "model" : [model_logistic_regression],
+    #   "model__C" : [0.1, 1, 10],  # inverse regularization strength
     # }
+
+    parameter_grid_gradient_boosting = {
+        "model" : [model_gradient_boosting],
+        "model__n_estimators" : [20, 30, 50]
+    }
 
     parameter_grid_random_forest = {
         "model" : [model_random_forest],
-        # "model__n_estimators" : [10, 25, 50],  # number of max trees in the forest
-        "model__n_estimators" : [10, 20, 25],  # number of max trees in the forest
-        # "model__max_depth" : [5, 10, 15],
-        "model__max_depth" : [25, 30],
+        "model__n_estimators" : [30, 50, 75],  # number of max trees in the forest
+        # "model__max_depth" : [2, 3, 4],
+        "model__max_depth" : [20, df.shape[1]],
     }
 
-    meta_parameter_grid = [parameter_grid_logistic_regression,
-                        parameter_grid_random_forest] #,
-                        # parameter_grid_gradient_boosting]
+    # NOTE: NN does not perform well on this dataset + takes a long time to train
+    # parameter_grid_neural_network = {
+    #     "model": [model_neural_network],
+    #     "model__hidden_layer_sizes": [(30, 30), (40, 30)],  # Example hidden layer configurations
+    #     "model__alpha": [0.0001],  # Regularization parameter
+    # }
+    
+    
+    meta_parameter_grid = [
+                    # parameter_grid_logistic_regression,
+                       parameter_grid_random_forest,
+                       parameter_grid_gradient_boosting] #,
+                      #  parameter_grid_neural_network]
 
     meta_parameter_grid = [{**parameter_grid_preprocessing, **model_grid}
                         for model_grid in meta_parameter_grid]
