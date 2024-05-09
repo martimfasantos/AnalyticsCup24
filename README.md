@@ -9,6 +9,7 @@ Within this year's Analytics Cup challenge, the focus is on LLMeals, a startup d
 | Martim Santos  | https://github.com/martimfasantos    |
 
 **Ranking:** 38 / 160
+
 **Project Grade:** 1.3 (German grading scale)
 
 ---
